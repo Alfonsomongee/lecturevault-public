@@ -1,0 +1,14 @@
+# LectureVault Python dependencies for local speech-to-text.
+# Pinned to the versions the transcriptions are made with (Python 3.12). To update one, change it here,
+# run `npm run batch:transcribe` on a short class and compare the transcript before keeping the change.
+
+# >= 1.1.0 enables `hotwords` (course glossary biasing)
+faster-whisper==1.2.1
+ctranslate2==4.8.2
+av==19.0.1
+
+# Only for an NVIDIA GPU (--device cuda); ctranslate2 4.x needs CUDA 12 and cuDNN 9.
+# They only exist for Windows and Linux: on macOS, or to save the download on a CPU-only machine,
+# delete these two lines.
+nvidia-cublas-cu12>=12,<13
+nvidia-cudnn-cu12>=9,<10

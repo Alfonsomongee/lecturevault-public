@@ -1,0 +1,14 @@
+requirements.txt
+pyproject.toml
+package.json
+package-lock.json
+tsconfig.json
+vitest.config.ts
+/scripts/
+/src/
+/tests/
+/public/
+/data/
+docs/*.md
+/.github/
+/.playwright-mcp/

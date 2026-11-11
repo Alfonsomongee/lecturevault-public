@@ -1,0 +1,153 @@
+name: Daily agent
+
+# Revisa el campus cada noche de lunes a viernes, graba las clases nuevas de Collaborate, las transcribe,
+# genera los apuntes y sube todo a este repositorio. No hace falta tener el ordenador encendido.
+#
+# Antes de activarlo (una sola vez), en Settings > Secrets and variables > Actions:
+#   Secrets:    LMS_USERNAME, LMS_PASSWORD, GEMINI_API_KEY  (y DEEPSEEK_API_KEY, opcional, como respaldo)
+#   Variables:  LMS_BASE_URL (opcional; por defecto https://learn.universidadviu.com)
+# El repositorio tiene que ser PRIVADO: la subida se niega a publicar en uno público.
+#
+# La primera vez ejecútalo a mano (Actions > Daily agent > Run workflow) con dry_run = true: solo entra al
+# campus y lista lo que haría, sin grabar. Así compruebas que el campus acepta el inicio de sesión desde GitHub.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Solo comprobar (no graba ni sube nada)'
+        type: boolean
+        default: true
+      course:
+        description: 'Una sola asignatura (p. ej. 04MUIN). Vacío = todas'
+        type: string
+        default: ''
+      probe:
+        description: 'Abrir el reproductor de cada clase nueva y comprobar que hay audio/vídeo, sin grabar (1-2 min)'
+        type: boolean
+        default: false
+      latest_only:
+        description: 'Grabar solo la clase nueva más reciente de cada asignatura (para probar)'
+        type: boolean
+        default: false
+      materials:
+        description: 'Materiales del campus: download (descarga lo nuevo), list (solo la lista y el temario) u off'
+        type: choice
+        options: [download, list, 'off']
+        default: download
+
+permissions:
+  contents: write
+
+# Dos ejecuciones a la vez grabarían la misma clase dos veces
+concurrency:
+  group: daily-agent
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Revisar, grabar, transcribir y subir
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      # Navegador y entorno
+      BROWSER_CHANNEL: chrome
+      LECTUREVAULT_CI: '1'
+      # Campus
+      LMS_BASE_URL: ${{ vars.LMS_BASE_URL || 'https://learn.universidadviu.com' }}
+      ALLOWED_HOSTS: ${{ vars.ALLOWED_HOSTS || 'learn.universidadviu.com,campusvirtual.universidadviu.com,eu.bbcollab.com,collab2.bbcollab.com,collab2.edudevel.com' }}
+      LMS_USERNAME: ${{ secrets.LMS_USERNAME }}
+      LMS_PASSWORD: ${{ secrets.LMS_PASSWORD }}
+      # IA
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      # Subida: solo desde main, solo carpeta de la clase + data/daily-state.json
+      AUTO_GIT_SYNC: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && 'false' || 'true' }}
+      GIT_SYNC_BRANCH: main
+      # Calendario de la universidad (feed .ics con un token personal: va como secreto, nunca en el código)
+      LMS_CALENDAR_URL: ${{ secrets.LMS_CALENDAR_URL }}
+    steps:
+      # Sin «ref»: se ejecuta la rama desde la que se lanza (main en el calendario). Fuera de main la subida a git se salta sola.
+      - uses: actions/checkout@v4
+
+      - name: Identidad de git para los commits del agente
+        run: |
+          git config user.name "lecturevault-bot"
+          git config user.email "lecturevault-bot@users.noreply.github.com"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Entorno de Whisper (solo CPU)
+        run: |
+          python -m venv .venv
+          # Sin las librerías de NVIDIA: el runner no tiene GPU
+          grep -v '^nvidia-' requirements.txt > requirements.cpu.txt
+          .venv/bin/pip install -r requirements.cpu.txt
+
+      - name: ffmpeg y Google Chrome
+        # Normalmente tarda menos de 1 min; dos veces se quedó atascado (58 min la primera). Se salta lo que el
+        # runner ya trae y apt tiene plazos de red; si aun así se cuelga, a los 12 min se corta y se ve el motivo.
+        timeout-minutes: 12
+        run: |
+          APT="-o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20"
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update $APT
+            sudo apt-get install -y $APT ffmpeg
+          fi
+          if ! command -v google-chrome >/dev/null; then
+            timeout 480 npx playwright install --with-deps chrome
+          fi
+          ffmpeg -version | head -1
+          google-chrome --version
+
+      - name: Modelo de Whisper en caché
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-small-v1
+
+      - name: Agente diario
+        # Una clase de 2 h tarda ~100 min y el 10-nov dos clases no cupieron en 150. El agente solo empieza una clase
+        # si le cabe en DAILY_BUDGET_MINUTES (deja el resto para la noche siguiente); el timeout es la red de seguridad.
+        timeout-minutes: 300
+        env:
+          DAILY_BUDGET_MINUTES: '270'
+          # Los valores de los inputs pasan por el entorno, nunca pegados en el script
+          EVENT: ${{ github.event_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          ONLY_COURSE: ${{ inputs.course }}
+          LATEST_ONLY: ${{ inputs.latest_only }}
+          PROBE: ${{ inputs.probe }}
+          # The scheduled run has no inputs: it downloads what is new
+          MATERIALS: ${{ inputs.materials || 'download' }}
+        run: |
+          ARGS=(--speed 2 --silent --headless --device cpu)
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ "$DRY_RUN" = "true" ]; then ARGS+=(--dry-run --dump-table); fi
+            if [ "$LATEST_ONLY" = "true" ]; then ARGS+=(--latest); fi
+            if [ "$PROBE" = "true" ]; then ARGS+=(--probe); fi
+            if [ -n "$ONLY_COURSE" ]; then ARGS+=(--course "$ONLY_COURSE"); fi
+          fi
+          npm run auto:daily -- "${ARGS[@]}"
+
+      - name: Diagnóstico (estructura de las tablas y capturas)
+        if: failure() || inputs.dry_run
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico
+          path: |
+            data/diagnostics/
+            data/screenshots/
+            data/logs/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,121 @@
+/*
+ * The printed notes. Sober, book-like: serif text, one graphite ink, hairline rules, grey callouts.
+ * Nothing that cuts a box, a formula, a chart or a title across two pages.
+ */
+body.print {
+  --ink: #1c1f23;
+  --ink-2: #4a4f57;
+  --ink-3: #7b818a;
+  --rule: #cfd2d6;
+  --wash: #f4f5f6;
+  /* Cambria and Palatino have lining figures (Georgia's old-style digits look odd in tables and dates) */
+  --serif: Cambria, "Palatino Linotype", "Book Antiqua", Charter, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 10.5pt;
+  line-height: 1.58;
+  min-height: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.doc { max-width: none; padding: 0; margin: 0; }
+
+/* ---------- document heading ---------- */
+.doc-head { margin: 0 0 20pt; padding-bottom: 12pt; border-bottom: 0.75pt solid var(--ink); }
+.doc-kicker { font: 600 8.5pt/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 7pt; }
+.doc-title { font: 700 23pt/1.18 var(--serif); letter-spacing: -.012em; margin: 0; color: var(--ink); }
+.doc-meta { font: 9.5pt/1.4 var(--sans); color: var(--ink-3); margin-top: 8pt; }
+.doc-note { font: 9pt/1.45 var(--sans); color: var(--ink-3); margin: 12pt 0 16pt; }
+
+/* Cover of the whole-course PDF */
+.doc-head.cover { border: 0; padding: 62mm 0 0; margin: 0; min-height: 200mm; break-after: page; position: relative; }
+.doc-head.cover .doc-kicker { font-size: 10pt; margin-bottom: 14pt; }
+.doc-head.cover .doc-title { font-size: 36pt; line-height: 1.1; padding-bottom: 16pt; border-bottom: 0.75pt solid var(--ink); }
+.doc-head.cover .doc-meta { font-size: 10.5pt; margin-top: 14pt; }
+
+/* ---------- table of contents ---------- */
+.contents { margin: 0 0 8pt; break-after: page; }
+.contents h2 { font: 600 8.5pt/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12pt; padding-bottom: 6pt; border-bottom: 0.75pt solid var(--rule); }
+.contents ol { margin: 0; padding: 0; list-style: none; counter-reset: topic; }
+.contents > ol > li { counter-increment: topic; margin: 11pt 0 0; font: 700 11.5pt/1.35 var(--serif); break-inside: avoid; }
+.contents > ol > li::before { content: counter(topic, decimal-leading-zero); display: inline-block; width: 2.2em; font: 600 9pt var(--sans); color: var(--ink-3); letter-spacing: .04em; }
+.contents ul { margin: 3pt 0 0 2.2em; padding: 0; list-style: none; }
+.contents ul li { font: 400 10pt/1.4 var(--serif); color: var(--ink-2); margin: 2pt 0; }
+
+/* ---------- chapters (course PDF) ---------- */
+.chapter { break-before: page; }
+.chapter-kicker { font: 600 8.5pt/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 6pt; }
+.chapter-title { font: 700 21pt/1.2 var(--serif); letter-spacing: -.01em; margin: 0 0 16pt; padding-bottom: 8pt; border-bottom: 0.75pt solid var(--ink); }
+.klass { margin-top: 24pt; }
+.klass:first-of-type { margin-top: 0; }
+.klass > h2 { font: 700 15pt/1.25 var(--serif); margin: 0; border: 0; padding: 0; break-after: avoid; }
+.klass-meta { font: 8.5pt/1.3 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 3pt 0 8pt; break-after: avoid; }
+
+/* ---------- prose ---------- */
+.doc .prose { max-width: none; font-size: 10.5pt; line-height: 1.58; color: var(--ink); }
+.doc .prose p { margin: 0 0 7pt; text-align: justify; hyphens: auto; -webkit-hyphens: auto; orphans: 3; widows: 3; }
+.doc .prose strong { font-weight: 700; color: var(--ink); }
+.doc .prose em { font-style: italic; }
+.doc .prose a { color: inherit; text-decoration: none; }
+
+.doc .prose h1, .doc .prose h2, .doc .prose h3, .doc .prose h4 { color: var(--ink); break-after: avoid; break-inside: avoid; }
+.doc .prose h1 { font: 700 17pt/1.25 var(--serif); margin: 22pt 0 8pt; }
+.doc .prose h2 { font: 700 13.5pt/1.3 var(--serif); margin: 22pt 0 7pt; padding-bottom: 4pt; border-bottom: 0.5pt solid var(--rule); }
+.doc .prose h3 { font: 700 11.5pt/1.35 var(--serif); margin: 15pt 0 4pt; }
+.doc .prose h4 { font: 700 10.5pt/1.35 var(--serif); font-style: italic; margin: 11pt 0 3pt; }
+.doc .prose > :first-child { margin-top: 0; }
+/* Inside the course PDF the class has its own title: its headings step down one level */
+.klass .prose h2 { font-size: 12.5pt; }
+.klass .prose h3 { font-size: 11pt; }
+
+.doc .prose ul, .doc .prose ol { margin: 3pt 0 8pt 1.5em; padding: 0; }
+.doc .prose li { margin: 2pt 0; padding-left: 2pt; text-align: left; }
+.doc .prose li > p { margin: 0 0 3pt; text-align: left; }
+.doc .prose li::marker { color: var(--ink-3); }
+.doc .prose li ul, .doc .prose li ol { margin: 2pt 0 2pt 1.3em; }
+
+.doc .prose hr { border: 0; border-top: 0.5pt solid var(--rule); margin: 16pt 0; }
+
+.doc .prose blockquote { margin: 10pt 0; padding: 1pt 0 1pt 12pt; border-left: 1.5pt solid var(--ink-3); color: var(--ink-2); font-style: italic; }
+.doc .prose blockquote p { text-align: left; margin-bottom: 4pt; }
+
+.doc .prose code { font: 9pt/1.4 Consolas, "Cascadia Mono", "Courier New", monospace; background: var(--wash); padding: .5pt 3pt; border-radius: 2pt; color: var(--ink); }
+.doc .prose pre { margin: 9pt 0; padding: 8pt 10pt; background: var(--wash); border: 0.5pt solid var(--rule); border-radius: 2pt; white-space: pre-wrap; word-break: break-word; }
+.doc .prose pre code { background: none; padding: 0; font-size: 8.8pt; }
+
+/* Tables: horizontal rules only */
+.doc .prose table { min-width: 55%; margin: 10pt 0; border-collapse: collapse; font: 9pt/1.4 var(--sans); font-variant-numeric: lining-nums tabular-nums; }
+.doc .prose th, .doc .prose td { padding: 4pt 8pt; border: 0; border-bottom: 0.5pt solid var(--rule); text-align: left; vertical-align: top; }
+.doc .prose thead th { font: 700 8.5pt/1.3 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); border-top: 0.75pt solid var(--ink); border-bottom: 0.75pt solid var(--ink); }
+.doc .prose tbody tr:last-child td { border-bottom: 0.75pt solid var(--ink); }
+
+/* Callouts: grey box, a graphite rule, the label in small capitals */
+.doc .prose .callout { margin: 11pt 0; padding: 7pt 12pt 7pt 11pt; border: 0; border-left: 2pt solid var(--ink-3); border-radius: 0; background: var(--wash); color: var(--ink); font-size: 10pt; line-height: 1.5; }
+.doc .prose .callout p { text-align: left; margin-bottom: 4pt; }
+.doc .prose .callout-title { font: 700 8pt/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 3pt; }
+.doc .callout-note { --callout-fg: #4a5a6b; border-left-color: #8a97a6; }
+.doc .callout-tip { --callout-fg: #4b6455; border-left-color: #8ba596; }
+.doc .callout-important, .doc .callout-exam { --callout-fg: #1c1f23; border-left-color: #1c1f23; background: #eceeef; }
+.doc .callout-warning { --callout-fg: #6b5a2a; border-left-color: #b59f5b; }
+.doc .callout-caution { --callout-fg: #7a3a3a; border-left-color: #b57a7a; }
+
+/* Formulas and figures */
+.doc .prose .katex { font-size: 1.04em; }
+.doc .prose .katex-display { margin: 11pt 0; overflow: visible; }
+.doc .prose figure, .doc .prose .dg, .doc .prose [class*="diagram"], .doc .prose .dg-wrap { margin: 12pt 0; }
+.doc .prose .dg-svg { max-height: 82mm; width: 100%; }
+.doc .prose img { max-width: 100%; height: auto; }
+.doc .prose .dg-readout, .doc .prose .dg-hit { display: none; }
+
+/* Never cut these across a page */
+.doc .prose .callout, .doc .prose pre, .doc .prose blockquote, .doc .prose table, .doc .prose tr,
+.doc .prose .katex-display, .doc .prose li, .doc .prose img, .doc .prose figure, .doc .prose .dg, .doc .prose .dg-svg { break-inside: avoid; }
+
+/* The time marks were buttons in the app: on paper they are a quiet reference to the recording */
+.doc .prose button.ts { all: unset; font: 7.5pt var(--sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.doc .prose button.ts::before { content: "["; }
+.doc .prose button.ts::after { content: "]"; }
+
+@page { size: A4; }

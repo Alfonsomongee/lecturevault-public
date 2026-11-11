@@ -1,0 +1,14 @@
+{
+  "name": "LectureVault · Apuntes del máster",
+  "short_name": "Apuntes",
+  "description": "Apuntes, resúmenes y transcripciones de las clases.",
+  "lang": "es",
+  "start_url": "/#/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#37352f",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

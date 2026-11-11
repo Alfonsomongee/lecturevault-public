@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Build output
+dist/
+
+# Local data (browser profiles, database, screenshots, logs, audio)
+data/audio/
+data/browser-profile/
+data/logs/
+data/screenshots/
+data/diagnostics/
+data/demo/
+data/*.db*
+data/models/
+data/backups/
+data/trash/
+backups/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Your own classes, transcripts, notes and course materials never go in this repository
+data/
+docs/data/
+showcase-out/
